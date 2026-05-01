@@ -4,9 +4,17 @@ from __future__ import annotations
 DTYPE_BYTES = 2
 LSE_BYTES = 4
 
-# ── L4 GPU hardware ceilings (dense BF16/FP16 tensor-core numbers) ──
-L4_PEAK_TFLOPS = 121.0
-L4_PEAK_BW_GBS = 300.0
+# ── NVIDIA A100 (SXM, 80GB class) hardware ceilings ──
+# Peak FP16/BF16 tensor-core throughput is the DENSE (no 2:4 structured sparsity)
+# ceiling — the same regime as FlashAttention / standard matmul. NVIDIA also cites
+# ~624 TFLOP/s with sparsity; that is intentionally NOT used here.
+# Peak HBM bandwidth per NVIDIA spec sheet for this SKU class.
+A100_PEAK_TFLOPS = 312.0
+A100_PEAK_BW_GBS = 2039.0
+
+# Default roofline targets for notebooks (alias for clarity at callsites).
+PEAK_TFLOPS = A100_PEAK_TFLOPS
+PEAK_BW_GBS = A100_PEAK_BW_GBS
 
 
 def ridge_point(peak_tflops: float, peak_bw_gbs: float) -> float:

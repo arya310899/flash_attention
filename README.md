@@ -26,7 +26,7 @@ This notebook focuses on integrating and evaluating Pallas-based attention in a 
 
 It is the "model-training + kernel-roofline" notebook for the Pallas path.
 
-## Results Overview (L4 GPU runs in notebooks)
+## Results Overview (A100 GPU targets in notebooks / roofline utils)
 
 - **Triton forward scaling (`trition_attn.ipynb`):** speedup grows with sequence length (for example, `6.22x` at `N=2048`, `11.27x` at `N=4096`, and `9.27x` at `N=32768`).
 - **Triton memory scaling:** at `N=32768`, reference forward uses about `16477 MB` while Triton uses about `94 MB`; in backward, reference OOMs at `N=16384` while Triton completes (`~78.5 ms`, `~80 MB` incremental memory).

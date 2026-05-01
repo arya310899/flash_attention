@@ -451,19 +451,22 @@ def plot_roofline_scatter_single(
 def plot_roofline_dual_pass(
     df,
     cs,
-    l4_peak_tflops: float,
-    l4_peak_bw_gbs: float,
-    l4_ridge: float,
+    peak_tflops: float,
+    peak_bw_gbs: float,
+    ridge_flops_per_byte: float,
     naive_palette: dict,
     flash_palette: dict,
     output_path: str,
+    *,
+    gpu_roof_label: str = "A100 roof",
+    title_gpu: str = "A100",
 ) -> None:
     """Two-panel roofline plot for forward/backward results."""
     setup_theme("whitegrid")
     fig, axes = plt.subplots(1, 2, figsize=(15, 6.5))
 
     for ax, direction, title in [(axes[0], "fwd", "Forward"), (axes[1], "bwd", "Backward")]:
-        draw_roofline(ax, l4_peak_tflops, l4_peak_bw_gbs, "L4 roof", color="black")
+        draw_roofline(ax, peak_tflops, peak_bw_gbs, gpu_roof_label, color="black")
 
         for c_val in cs:
             sub = df[df["C"] == c_val].sort_values("T")
@@ -499,15 +502,15 @@ def plot_roofline_dual_pass(
                         color=flash_palette[c_val],
                     )
 
-        ax.axvspan(0.1, l4_ridge, alpha=0.04, color="red")
-        ax.axvspan(l4_ridge, 1e4, alpha=0.04, color="blue")
+        ax.axvspan(0.1, ridge_flops_per_byte, alpha=0.04, color="red")
+        ax.axvspan(ridge_flops_per_byte, 1e4, alpha=0.04, color="blue")
         ax.set_xscale("log")
         ax.set_yscale("log")
         ax.set_xlim(0.5, 5000)
-        ax.set_ylim(1e-2, l4_peak_tflops * 2)
+        ax.set_ylim(1e-2, peak_tflops * 2)
         ax.set_xlabel("Arithmetic intensity (FLOPs / byte)")
         ax.set_ylabel("Achieved TFLOP/s")
-        ax.set_title(f"{title} pass roofline - Pallas Flash vs Naive on L4")
+        ax.set_title(f"{title} pass roofline - Pallas Flash vs Naive on {title_gpu}")
         ax.legend(fontsize=7, ncol=2, loc="lower right")
 
     save_show(fig, output_path)
@@ -520,6 +523,8 @@ def plot_roofline_trajectory_and_efficiency(
     peak_tflops: float,
     peak_bw_gbs: float,
     output_path: str,
+    *,
+    roofline_label: str = "A100 roofline",
 ) -> None:
     """Two-panel roofline trajectory + achieved-vs-ceiling bar chart."""
     setup_theme("whitegrid")
@@ -530,7 +535,7 @@ def plot_roofline_trajectory_and_efficiency(
     memory_perf = (peak_bw_gbs / 1e3) * ai_range
     compute_perf = np.full_like(ai_range, peak_tflops)
     attainable = np.minimum(memory_perf, compute_perf)
-    ax.plot(ai_range, attainable, color="black", linewidth=2.5, zorder=4, label="L4 Roofline")
+    ax.plot(ai_range, attainable, color="black", linewidth=2.5, zorder=4, label=roofline_label)
     ax.axvline(x=ridge_point_value, color="black", linestyle=":", alpha=0.35, linewidth=1.2)
     ax.text(ridge_point_value * 1.06, 0.006, f"Ridge\n{ridge_point_value:.0f}", fontsize=8.5, color="gray", va="bottom")
 
@@ -570,7 +575,7 @@ def plot_roofline_trajectory_and_efficiency(
             )
 
     legend_handles = [
-        plt.Line2D([0], [0], color="black", lw=2, label="L4 Roofline"),
+        plt.Line2D([0], [0], color="black", lw=2, label=roofline_label),
         plt.scatter([], [], color="tab:red", marker="o", s=70, label="Naive (N up = darker)"),
         plt.scatter([], [], color="tab:blue", marker="s", s=70, label="Flash (N up = darker)"),
         mpatches.Patch(color="red", alpha=0.15, label="Memory-bound"),
